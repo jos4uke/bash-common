@@ -64,12 +64,12 @@ testFailedRemovingReadsWithMoreThanXIndependentEvents()
     assertFalse 'unexpected output to stderr' "[ -s ${stderrF} ]"
 
     if [[ ${PARAMETERS_TABLE["nb_of_independent_event"]} -eq 2 ]]; then
-    assertTrue 'unexpected count for XM=2 && XO=0, should be equal 41' "[ $(cat ${OUT} | grep "XM:i:[2]" | grep "XO:i:[0]" | wc -l) -eq 41 ]"
-    assertTrue 'unexpected count for XM=1 && XO=1, should be equal 13' "[ $(cat ${OUT} | grep "XM:i:[1]" | grep "XO:i:[1]" | wc -l) -eq 13 ]"
-    assertTrue 'unexpected count for XM=1 && XO=0, should be equal 168' "[ $(cat ${OUT} | grep "XM:i:[1]" | grep "XO:i:[0]" | wc -l) -eq 168 ]"
-    assertTrue 'unexpected count for XM=0 && XO=1, should be equal 21' "[ $(cat ${OUT} | grep "XM:i:[0]" | grep "XO:i:[1]" | wc -l) -eq 21 ]"
-    assertTrue 'unexpected count for XM=0 && XO=0, should be equal 1536' "[ $(cat ${OUT} | grep "XM:i:[0]" | grep "XO:i:[0]" | wc -l) -eq 1536 ]"
-    assertTrue 'unexpected count for XM=0 && XO=2, should be equal 2' "[ $(cat ${OUT} | grep "XM:i:[0]" | grep "XO:i:[2]" | wc -l) -eq 2 ]"
+    assertTrue "unexpected count for XM=2 && XO=0, should be equal $(cat ${TEST_SAM} | grep XM:i:[2][[:space:]] | grep XO:i:[0][[:space:]] | wc -l) " "[ $(cat ${OUT} | grep XM:i:[2] | grep XO:i:[0] | wc -l) -eq $(cat ${TEST_SAM} | grep XM:i:[2][[:space:]] | grep XO:i:[0][[:space:]] | wc -l) ]"
+    assertTrue "unexpected count for XM=1 && XO=1, should be equal $(cat ${TEST_SAM} | grep XM:i:[1][[:space:]] | grep XO:i:[1][[:space:]] | wc -l)" "[ $(cat ${OUT} | grep XM:i:[1] | grep XO:i:[1] | wc -l) -eq $(cat ${TEST_SAM} | grep XM:i:[1][[:space:]] | grep XO:i:[1][[:space:]] | wc -l)]"
+    assertTrue 'unexpected count for XM=1 && XO=0, should be equal $(cat ${TEST_SAM} | grep XM:i:[1][[:space:]] | grep XO:i:[0][[:space:]] | wc -l)' "[ $(cat ${OUT} | grep XM:i:[1] | grep XO:i:[0] | wc -l) -eq $(cat ${TEST_SAM} | grep XM:i:[1][[:space:]] | grep XO:i:[0][[:space:]] | wc -l) ]"
+    assertTrue 'unexpected count for XM=0 && XO=1, should be equal $(cat ${TEST_SAM} | grep XM:i:[0][[:space:]] | grep XO:i:[1][[:space:]] | wc -l)' "[ $(cat ${OUT} | grep XM:i:[0] | grep XO:i:[1] | wc -l) -eq $(cat ${TEST_SAM} | grep XM:i:[0][[:space:]] | grep XO:i:[1][[:space:]] | wc -l) ]"
+    assertTrue 'unexpected count for XM=0 && XO=0, should be equal $(cat ${TEST_SAM} | grep XM:i:[0][[:space:]] | grep XO:i:[0][[:space:]] | wc -l) ' "[ $(cat ${OUT} | grep XM:i:[0] | grep XO:i:[0] | wc -l) -eq $(cat ${TEST_SAM} | grep XM:i:[0][[:space:]] | grep XO:i:[0][[:space:]] | wc -l) ]"
+    assertTrue 'unexpected count for XM=0 && XO=2, should be equal $(cat ${TEST_SAM} | grep XM:i:[0][[:space:]] | grep XO:i:[2][[:space:]] | wc -l)' "[ $(cat ${OUT} | grep XM:i:[0] | grep XO:i:[2] | wc -l) -eq $(cat ${TEST_SAM} | grep XM:i:[0][[:space:]] | grep XO:i:[2][[:space:]] | wc -l) ]"
     fi
 }
 
