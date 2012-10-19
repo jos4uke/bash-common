@@ -1,0 +1,2 @@
+20121019 03:22:21  [Filter] 03_Filter/test_mapped.sam 44962 
+20121019 03:22:21  [Filter] 03_Filter/test_mapped_MAPQ.sam 38230 
