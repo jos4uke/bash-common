@@ -80,6 +80,7 @@ testFailedRemovingReadsWithMoreThanXIndependentEvents()
 
 oneTimeSetUp()
 {
+    tests_start=`date +%H:%M:%S`
     . ../lib/pipeline_lib.inc
     OUTPUT_DIR="${SHUNIT_TMPDIR}/OUTPUT"
     stdoutF="${OUTPUT_DIR}/stdoutF"
@@ -92,7 +93,14 @@ oneTimeSetUp()
 }
 
 tearDown()
-{
+{  
+    echo "Test starts ${tests_start}"
+    tests_end=`date  +%H:%M:%S`
+    echo "Test ends ${tests_end}"
+    exec_start_time=`date +%s -d ${tests_end}`
+    exec_end_time=`date +%s -d ${tests_start}`
+    exec_time=$[$exec_end_time-$exec_start_time]
+    echo |awk -v time=$exec_time '{print "execution time: " strftime("%Hh:%Mm:%Ss", time)}'
     rm -rf $OUTPUTDIR
     echo "------------"
 }
