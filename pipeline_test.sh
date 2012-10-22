@@ -74,6 +74,43 @@ testFailedRemovingReadsWithMoreThanXIndependentEvents()
 }
 
 
+#--------------------------
+# testFailedRemovingIndels
+#
+testFailedRemovingIndels()
+{
+    declare -A PARAMETERS_TABLE
+    get_pipeline_default_parameters $PIPELINE_DEFAULT_CONFIG
+
+    IN=${TEST_OUTPUT_DIR}/test_mapped_MAPQ_XIE.sam
+    OUT=${TEST_OUTPUT_DIR}/test_mapped_MAPQ_XIE_YID.sam
+
+    echo -e "removing reads with indels size greater than "${PARAMETERS_TABLE["microindel_size"]}" bases from $(wc -l ${IN} | tr " " " (")) reads..."
+    
+    time remove_reads_with_indels_size_greater_than_y_bases ${IN} >${OUT} 2>${stderrF}
+
+    echo -e "std out output:"
+    head -4 "${OUT}"
+    echo -e "std err output:" 
+    head -4 "${stderrF}"
+
+    assertTrue 'expected output to stdout' "[ -s ${OUT} ]"
+    assertTrue 'expected output to stderr' "[ -s ${stderrF} ]"
+    assertTrue 'unexpected inequality in total reads count, input should be greater than output' "[ $(cat ${IN} | wc -l) -gt $(cat ${OUT} | wc -l) ]"
+
+    if [[ ${PARAMETERS_TABLE["microindel_size"]} -eq 5 ]]; then
+	assertTrue "unexpected difference in reads count with no indels, should be equal in input and output files: $(cat ${IN} | cut -d' ' -f6 | grep -v '[ID]' | wc -l)" "[ $(cat ${IN} | cut -d' ' -f6 | grep -v '[ID]' | wc -l) -eq $(cat ${OUT} | cut -d' ' -f6 | grep -v '[ID]' | wc -l) ]"
+	assertTrue "unexpected difference in reads count with no indels and no soft clipping, should be equal in input and output files:  $(cat ${IN} | cut -d' ' -f6 | grep -v '[ID]' | grep -v '[S]' | wc -l)" "[ $(cat ${IN} | cut -d' ' -f6 | grep -v '[ID]' | grep -v '[S]' | wc -l) -eq $(cat ${OUT} | cut -d' ' -f6 | grep -v '[ID]' | grep -v '[S]' | wc -l) ]"
+	assertTrue "unexpected difference in reads count with no indels but having soft clipping, should be equal in input and output files: $(cat ${IN} | cut -d' ' -f6 | grep -v '[ID]' | grep '[S]' | wc -l)" "[ $(cat ${IN} | cut -d' ' -f6 | grep -v '[ID]' | grep '[S]' | wc -l) -eq $(cat ${OUT} | cut -d' ' -f6 | grep -v '[ID]' | grep '[S]' | wc -l) ]"
+	assertFalse "unexpected equivalence in reads count with indels, should be different in input and output files" "[ $(cat ${IN} | cut -d' ' -f6 | grep '[ID]' | wc -l) -eq  $(cat ${OUT} | cut -d' ' -f6 | grep '[ID]' | wc -l) ]"
+	assertFalse "unexpected equivalence in reads count with indels but no soft clipping, should be different in input and output files" "[ $(cat ${IN} | cut -d' ' -f6 | grep '[ID]' | grep -v '[S]' | wc -l) -eq $(cat ${OUT} | cut -d' ' -f6 | grep '[ID]' | grep -v '[S]' | wc -l) ]"
+	assertFalse "unexpected equivalence in reads count with indels and soft clipping, should be different in input and output files" "[ $(cat ${IN} | cut -d' ' -f6 | grep '[ID]' | grep '[S]' | wc -l) -eq $(cat ${OUT} | cut -d' ' -f6 | grep '[ID]' | grep '[S]' | wc -l) ]"
+    fi
+}
+
+
+#================
+
 #
 # Configuration
 #
