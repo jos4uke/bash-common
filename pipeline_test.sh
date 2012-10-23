@@ -13,8 +13,8 @@ testHashTableOutput()
     get_pipeline_default_parameters $PIPELINE_DEFAULT_CONFIG
     for i in "${!PARAMETERS_TABLE[@]}"
     do
-	echo -e "key: $i"
-	echo -e "value ${PARAMETERS_TABLE[$i]}"
+	echo -e "key:   $i"
+	echo -e "value: ${PARAMETERS_TABLE[$i]}"
     done
 
     assertTrue 'Unexpected void Hash table' "[ ${#PARAMETERS_TABLE[@]} -ge 1 ]"
@@ -53,7 +53,7 @@ testFailedRemovingReadsWithMoreThanXIndependentEvents()
     get_pipeline_default_parameters $PIPELINE_DEFAULT_CONFIG
 
     OUT=${TEST_OUTPUT_DIR}/test_mapped_MAPQ_XIE.sam
-    time remove_reads_with_more_than_x_independent_events "${TEST_SAM}" >${OUT} 2>${stderrF}
+    time remove_reads_with_more_than_x_independent_events ${PARAMETERS_TABLE["nb_of_independent_event"]} "${TEST_SAM}" >${OUT} 2>${stderrF}
 
     echo -e "std out output:"
     head -4 "${OUT}"
@@ -61,7 +61,7 @@ testFailedRemovingReadsWithMoreThanXIndependentEvents()
     head -4 "${stderrF}"
 
     assertTrue 'expected output to stdout' "[ -s ${OUT} ]"
-    assertFalse 'unexpected output to stderr' "[ -s ${stderrF} ]"
+    assertTrue 'expected output to stderr' "[ -s ${stderrF} ]"
 
     if [[ ${PARAMETERS_TABLE["nb_of_independent_event"]} -eq 2 ]]; then
     assertTrue "unexpected count for XM=2 && XO=0, should be equal $(cat ${TEST_SAM} | grep XM:i:[2][[:space:]] | grep XO:i:[0][[:space:]] | wc -l) " "[ $(cat ${OUT} | grep XM:i:[2] | grep XO:i:[0] | wc -l) -eq $(cat ${TEST_SAM} | grep XM:i:[2][[:space:]] | grep XO:i:[0][[:space:]] | wc -l) ]"
@@ -85,9 +85,9 @@ testFailedRemovingIndels()
     IN=${TEST_OUTPUT_DIR}/test_mapped_MAPQ_XIE.sam
     OUT=${TEST_OUTPUT_DIR}/test_mapped_MAPQ_XIE_YID.sam
 
-    echo -e "removing reads with indels size greater than "${PARAMETERS_TABLE["microindel_size"]}" bases from $(wc -l ${IN} | tr " " " (")) reads..."
+    echo -e "removing reads with indels size greater than ${PARAMETERS_TABLE['microindel_size']} bases from $(wc -l ${IN} | tr ' ' " (")) reads..."
     
-    time remove_reads_with_indels_size_greater_than_y_bases ${IN} >${OUT} 2>${stderrF}
+    time remove_reads_with_indels_size_greater_than_y_bases ${PARAMETERS_TABLE["microindel_size"]} ${IN} >${OUT} 2>${stderrF}
 
     echo -e "std out output:"
     head -4 "${OUT}"
@@ -103,7 +103,7 @@ testFailedRemovingIndels()
 	assertTrue "unexpected difference in reads count with no indels and no soft clipping, should be equal in input and output files:  $(cat ${IN} | cut -d' ' -f6 | grep -v '[ID]' | grep -v '[S]' | wc -l)" "[ $(cat ${IN} | cut -d' ' -f6 | grep -v '[ID]' | grep -v '[S]' | wc -l) -eq $(cat ${OUT} | cut -d' ' -f6 | grep -v '[ID]' | grep -v '[S]' | wc -l) ]"
 	assertTrue "unexpected difference in reads count with no indels but having soft clipping, should be equal in input and output files: $(cat ${IN} | cut -d' ' -f6 | grep -v '[ID]' | grep '[S]' | wc -l)" "[ $(cat ${IN} | cut -d' ' -f6 | grep -v '[ID]' | grep '[S]' | wc -l) -eq $(cat ${OUT} | cut -d' ' -f6 | grep -v '[ID]' | grep '[S]' | wc -l) ]"
 	assertFalse "unexpected equivalence in reads count with indels, should be different in input and output files" "[ $(cat ${IN} | cut -d' ' -f6 | grep '[ID]' | wc -l) -eq  $(cat ${OUT} | cut -d' ' -f6 | grep '[ID]' | wc -l) ]"
-	assertFalse "unexpected equivalence in reads count with indels but no soft clipping, should be different in input and output files" "[ $(cat ${IN} | cut -d' ' -f6 | grep '[ID]' | grep -v '[S]' | wc -l) -eq $(cat ${OUT} | cut -d' ' -f6 | grep '[ID]' | grep -v '[S]' | wc -l) ]"
+	assertTrue "expected equivalence in reads count with indels but no soft clipping, should be equivalent in input and output files" "[ $(cat ${IN} | cut -d' ' -f6 | grep '[ID]' | grep -v '[S]' | wc -l) -eq $(cat ${OUT} | cut -d' ' -f6 | grep '[ID]' | grep -v '[S]' | wc -l) ]"
 	assertFalse "unexpected equivalence in reads count with indels and soft clipping, should be different in input and output files" "[ $(cat ${IN} | cut -d' ' -f6 | grep '[ID]' | grep '[S]' | wc -l) -eq $(cat ${OUT} | cut -d' ' -f6 | grep '[ID]' | grep '[S]' | wc -l) ]"
     fi
 }
