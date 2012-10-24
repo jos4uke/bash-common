@@ -4,13 +4,13 @@
 # PIPELINE TESTS SUITE
 #
 
-#---------------------
-# testHashTableOutput 
+#--------------------------------------
+# testFailedLoadingDefaultConfigParams
 #
-testHashTableOutput()
+testFailedLoadingDefaultConfigParams()
 {
     declare -A PARAMETERS_TABLE
-    get_pipeline_default_parameters $PIPELINE_DEFAULT_CONFIG
+    get_pipeline_default_parameters $PIPELINE_DEFAULT_CONFIG 2>${stderrF}
     for i in "${!PARAMETERS_TABLE[@]}"
     do
 	echo -e "key:   $i"
@@ -18,15 +18,26 @@ testHashTableOutput()
     done
 
     assertTrue 'Unexpected void Hash table' "[ ${#PARAMETERS_TABLE[@]} -ge 1 ]"
+    assertFalse 'Unexpected output to stderr' "[ -s ${stderrF} ]"
 }
 
-#--------------------
-# testPrintHashTable 
+#-----------------------------------
+# testFailedLoadingUserConfigParams 
 #
-testPrintHashTable()
+testFailedLoadingUserConfigParams()
 {
     declare -A PARAMETERS_TABLE
-    get_pipeline_default_parameters $PIPELINE_DEFAULT_CONFIG
+    get_pipeline_default_parameters $PIPELINE_DEFAULT_CONFIG 2>${stderrF}
+    rtrn=$?
+    assertTrue 'Unexpected exit status code, should be equal to 0' "[ $rtrn -eq 0 ]"
+    assertFalse 'Unexpected output to stderr' "[ -s ${stderrF} ]"
+
+    get_pipeline_user_parameters $PIPELINE_USER_CONFIG 2>${stderrF}
+    rtrn=$?
+    assertTrue 'Unexpected exit status code, should be equal to 0' "[ $rtrn -eq 0 ]"
+    assertTrue 'Expected output to stderr' "[ -s ${stderrF} ]"
+    echo -e "stderr output:"
+    cat ${stderrF}
 }
 
 #---------------------------------------
@@ -123,6 +134,7 @@ oneTimeSetUp()
     TEST_OUTPUT_DIR="output"
 
     PIPELINE_DEFAULT_CONFIG="/projects/ARABIDOPSIS/SCRIPTS/PIPELINE/pipeline_default.config"
+    PIPELINE_USER_CONFIG="/projects/ARABIDOPSIS/SCRIPTS/PIPELINE/pipeline_user.config"
     TEST_SAM="data/test_mapped_MAPQ.sam"
 }
 
