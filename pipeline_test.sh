@@ -60,6 +60,32 @@ testFailedDefaultCheckingConfigParamsValidity()
     cat ${stderrF}
 }
 
+#-------------------------------------------------------
+# testFailedDefaultCheckingConfigParamsIntervalValidity
+#
+testFailedDefaultCheckingConfigParamsIntervalValidity()
+{
+    declare -A PARAMETERS_TABLE
+    get_pipeline_default_parameters $PIPELINE_DEFAULT_CONFIG 2>${stderrF} 
+    rtrn=$?
+    assertTrue 'Unexpected exit status code, should be equal to 0' "[ $rtrn -eq 0 ]"
+    assertFalse 'Unexpected output to stderr' "[ -s ${stderrF} ]"
+    
+    check_params_validity 2>${stderrF}
+    rtrn=$?
+    echo -e "exit status code: $rtrn"
+    assertTrue 'Unexpected exit status code, should be equal to 0' "[ $rtrn -eq 0 ]"
+    assertTrue 'Expected output to stderr' "[ -s ${stderrF} ]"
+
+    check_params_interval_validity 2>${stderrF}
+    rtrn=$?
+    echo -e "exit status code: $rtrn"
+    assertTrue 'Unexpected exit status code, should be equal to 0' "[ $rtrn -eq 0 ]"
+    assertFalse 'Unexpected output to stderr' "[ -s ${stderrF} ]"
+    echo -e "stderr output:"
+    cat ${stderrF}
+}
+
 #---------------------------------------
 # testFailedEquivalentXMXOtagsLineCount 
 #
