@@ -4,6 +4,24 @@
 # PIPELINE TESTS SUITE
 #
 
+#-------------------
+# testFailedInArray 
+#
+testFailedInArray()
+{
+    tabix_formats=("gff" "bed" "sam" "vcf")
+    if ($(in_array "$value" "${tabix_formats[@]}")); then
+	echo -e "ok" >${stdoutF}
+    else
+	echo -e "failed" >${stderrF}
+    fi
+
+    assertTrue 'Expected output to stdout' "[ -s ${stdoutF} ]"
+    assertFalse 'Unexpected output to stderr' "[ -s ${stderrF} ]"
+    echo -e "stderr output:"
+    cat ${stderrF}
+}
+
 #--------------------------------------
 # testFailedLoadingDefaultConfigParams
 #
@@ -179,8 +197,8 @@ oneTimeSetUp()
     
     TEST_OUTPUT_DIR="output"
 
-    PIPELINE_DEFAULT_CONFIG="/projects/ARABIDOPSIS/SCRIPTS/PIPELINE/pipeline_default.config"
-    PIPELINE_USER_CONFIG="/projects/ARABIDOPSIS/SCRIPTS/PIPELINE/pipeline_user.config"
+    PIPELINE_DEFAULT_CONFIG="../share/pipeline/etc/pipeline_default.config"
+    PIPELINE_USER_CONFIG="../pipeline_user.config"
     TEST_SAM="data/test_mapped_MAPQ.sam"
 }
 
