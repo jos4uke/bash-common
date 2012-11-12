@@ -114,7 +114,7 @@ testFailedFastqcQualityFailureReport()
     check_params_validity
     check_params_interval_validity
 
-    if [[ ${PARAMETERS_TABLE["fastqc_bypass_failure"]} == "FALSE" ]]
+    if [[ ${PARAMETERS_TABLE["bypass_fastqc_failure_report_checking"]} == "FALSE" ]]
 	then
 	check_fastqc_quality_failure_report ${TEST_FASTQC_1} 2>${stderrF}
 	rtrn=$?
