@@ -104,6 +104,43 @@ testFailedDefaultCheckingConfigParamsIntervalValidity()
     cat ${stderrF}
 }
 
+#--------------------------------------
+# testFailedFastqcQualityFailureReport
+#
+testFailedFastqcQualityFailureReport()
+{
+    declare -A PARAMETERS_TABLE
+    get_pipeline_default_parameters $PIPELINE_DEFAULT_CONFIG
+    check_params_validity
+    check_params_interval_validity
+
+    if [[ ${PARAMETERS_TABLE["fastqc_bypass_failure"]} == "FALSE" ]]
+	then
+	check_fastqc_quality_failure_report ${TEST_FASTQC_1} 2>${stderrF}
+	rtrn=$?
+	echo -e "exit status code: $rtrn"
+	assertTrue 'Unexpected exit status code, should be equal to 0' "[ $rtrn -eq 0 ]"
+	assertFalse 'Unexpected output to stdout' "[ -s ${stdoutF} ]"
+	echo -e "stdout output:"
+	cat ${stdoutF}	
+	assertTrue 'Expected output to stderr' "[ -s ${stderrF} ]"
+	echo -e "stderr output:"
+	cat ${stderrF}
+
+	check_fastqc_quality_failure_report ${TEST_FASTQC_2} 2>${stderrF}
+	rtrn=$?
+	echo -e "exit status code: $rtrn"
+	assertTrue 'Unexpected exit status code, should be equal to 0' "[ $rtrn -eq 0 ]"
+	assertFalse 'Unexpected output to stdout' "[ -s ${stdoutF} ]"
+	echo -e "stdout output:"
+	cat ${stdoutF}
+	assertTrue 'Expected output to stderr' "[ -s ${stderrF} ]"
+	echo -e "stderr output:"
+	cat ${stderrF}	
+    fi
+}
+
+
 #---------------------------------------
 # testFailedEquivalentXMXOtagsLineCount 
 #
@@ -200,6 +237,8 @@ oneTimeSetUp()
     PIPELINE_DEFAULT_CONFIG="../share/pipeline/etc/pipeline_default.config"
     PIPELINE_USER_CONFIG="../pipeline_user.config"
     TEST_SAM="data/test_mapped_MAPQ.sam"
+    TEST_FASTQC_1="data/test_1_Qual_Raw_Reads_test1.fq_fastqc_summary.txt"
+    TEST_FASTQC_2="data/test_2_Qual_Raw_Reads_test2.fq_fastqc_summary.txt"
 }
 
 setUp()
