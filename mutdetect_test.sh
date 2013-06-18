@@ -28,7 +28,7 @@ testFailedInArray()
 testFailedLoadingDefaultConfigParams()
 {
     declare -A PARAMETERS_TABLE
-    get_pipeline_default_parameters $PIPELINE_DEFAULT_CONFIG 2>${stderrF}
+    get_mutdetect_default_parameters $PIPELINE_DEFAULT_CONFIG 2>${stderrF}
     for i in "${!PARAMETERS_TABLE[@]}"
     do
 	echo -e "key:   $i"
@@ -45,12 +45,12 @@ testFailedLoadingDefaultConfigParams()
 testFailedLoadingUserConfigParams()
 {
     declare -A PARAMETERS_TABLE
-    get_pipeline_default_parameters $PIPELINE_DEFAULT_CONFIG 2>${stderrF}
+    get_mutdetect_default_parameters $PIPELINE_DEFAULT_CONFIG 2>${stderrF}
     rtrn=$?
     assertTrue 'Unexpected exit status code, should be equal to 0' "[ $rtrn -eq 0 ]"
     assertFalse 'Unexpected output to stderr' "[ -s ${stderrF} ]"
 
-    get_pipeline_user_parameters $PIPELINE_USER_CONFIG 2>${stderrF}
+    get_mutdetect_user_parameters $PIPELINE_USER_CONFIG 2>${stderrF}
     rtrn=$?
     assertTrue 'Unexpected exit status code, should be equal to 0' "[ $rtrn -eq 0 ]"
     assertTrue 'Expected output to stderr' "[ -s ${stderrF} ]"
@@ -64,7 +64,7 @@ testFailedLoadingUserConfigParams()
 testFailedDefaultCheckingConfigParamsValidity()
 {
     declare -A PARAMETERS_TABLE
-    get_pipeline_default_parameters $PIPELINE_DEFAULT_CONFIG 2>${stderrF} 
+    get_mutdetect_default_parameters $PIPELINE_DEFAULT_CONFIG 2>${stderrF} 
     rtrn=$?
     assertTrue 'Unexpected exit status code, should be equal to 0' "[ $rtrn -eq 0 ]"
     assertFalse 'Unexpected output to stderr' "[ -s ${stderrF} ]"
@@ -84,7 +84,7 @@ testFailedDefaultCheckingConfigParamsValidity()
 testFailedDefaultCheckingConfigParamsIntervalValidity()
 {
     declare -A PARAMETERS_TABLE
-    get_pipeline_default_parameters $PIPELINE_DEFAULT_CONFIG 2>${stderrF} 
+    get_mutdetect_default_parameters $PIPELINE_DEFAULT_CONFIG 2>${stderrF} 
     rtrn=$?
     assertTrue 'Unexpected exit status code, should be equal to 0' "[ $rtrn -eq 0 ]"
     assertFalse 'Unexpected output to stderr' "[ -s ${stderrF} ]"
@@ -110,7 +110,7 @@ testFailedDefaultCheckingConfigParamsIntervalValidity()
 testFailedFastqcQualityFailureReport()
 {
     declare -A PARAMETERS_TABLE
-    get_pipeline_default_parameters $PIPELINE_DEFAULT_CONFIG
+    get_mutdetect_default_parameters $PIPELINE_DEFAULT_CONFIG
     check_params_validity
     check_params_interval_validity
 
@@ -162,7 +162,7 @@ testFailedEquivalentXMXOtagsLineCount()
 testFailedRemovingReadsWithMoreThanXIndependentEvents()
 {
     declare -A PARAMETERS_TABLE
-    get_pipeline_default_parameters $PIPELINE_DEFAULT_CONFIG
+    get_mutdetect_default_parameters $PIPELINE_DEFAULT_CONFIG
 
     OUT=${TEST_OUTPUT_DIR}/test_mapped_MAPQ_XIE.sam
     time remove_reads_with_more_than_x_independent_events ${PARAMETERS_TABLE["nb_of_independent_event"]} "${TEST_SAM}" >${OUT} 2>${stderrF}
@@ -192,7 +192,7 @@ testFailedRemovingReadsWithMoreThanXIndependentEvents()
 testFailedRemovingIndels()
 {
     declare -A PARAMETERS_TABLE
-    get_pipeline_default_parameters $PIPELINE_DEFAULT_CONFIG
+    get_mutdetect_default_parameters $PIPELINE_DEFAULT_CONFIG
 
     IN=${TEST_OUTPUT_DIR}/test_mapped_MAPQ_XIE.sam
     OUT=${TEST_OUTPUT_DIR}/test_mapped_MAPQ_XIE_YID.sam
@@ -230,12 +230,12 @@ testFailedRemovingIndels()
 oneTimeSetUp()
 {
     tests_start=`date +%H:%M:%S`
-    . ../lib/pipeline_lib.inc
+    . ../share/mutdetect/lib/mutdetect_lib.inc
     
     TEST_OUTPUT_DIR="output"
 
-    PIPELINE_DEFAULT_CONFIG="../share/pipeline/etc/pipeline_default.config"
-    PIPELINE_USER_CONFIG="../pipeline_user.config"
+    PIPELINE_DEFAULT_CONFIG="../share/mutdetect/etc/mutdetect_default.config"
+    PIPELINE_USER_CONFIG="../mutdetect_user.config"
     TEST_SAM="data/test_mapped_MAPQ.sam"
     TEST_FASTQC_1="data/test_1_Qual_Raw_Reads_test1.fq_fastqc_summary.txt"
     TEST_FASTQC_2="data/test_2_Qual_Raw_Reads_test2.fq_fastqc_summary.txt"
