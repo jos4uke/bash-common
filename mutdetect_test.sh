@@ -245,16 +245,16 @@ testGetMappedReads()
 #----------------------------
 # testGetTotalReadsCount
 
-#testTotalReadsCount()
-#{
-#	TEST_SAM_FILE="data/test.sam"
+testTotalReadsCount()
+{
+	TEST_SAM_FILE="data/test.sam"
 
-#    out=$(get_total_reads_count $TEST_SAM_FILE 2>${stderrF})
-#    out2=$(grep -v "^@" $TEST_SAM_FILE | wc -l)
+    out=$(get_total_reads_count $TEST_SAM_FILE 2>${stderrF})
+    out2=$(grep -v "^@" $TEST_SAM_FILE | wc -l)
 
-#	assertEquals "Unexpected inequality in total reads count" $out $out2
-#	
-#}
+	assertEquals "Unexpected inequality in total reads count" $out $out2
+	
+}
 
 
 
