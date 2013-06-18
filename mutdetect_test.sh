@@ -220,6 +220,25 @@ testFailedRemovingIndels()
     fi
 }
 
+#----------------------------
+# testGetMappedReads
+#
+testGetMappedReads()
+{
+	TEST_SAM_FILE="data/test.sam"
+	get_mapped_reads $TEST_SAM_FILE 2>${stderrF} >${stdoutF}
+
+	samtools_msg="[samopen] SAM header is present"
+	assertTrue "expected output to standard error" "[ -e ${stderrF} ]"
+	assertTrue "unexpected message from samtools" "tail -1 ${stderrF} | grep -e ^${samtools_msg}"
+	assertTrue "expected output to standard output" "[ -e ${stdoutF} ]"
+
+	echo "stderr output:"
+	cat ${stderrF}
+
+	#echo "stdout output"
+	#cat ${stdoutF}
+}
 
 #================
 
