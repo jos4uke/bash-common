@@ -230,7 +230,7 @@ testGetMappedReads()
 
 	samtools_msg="[samopen] SAM header is present"
 	assertTrue "expected output to standard error" "[ -e ${stderrF} ]"
-	assertTrue "unexpected message from samtools" "tail -1 ${stderrF} | grep -e ^${samtools_msg}"
+	assertTrue "unexpected message from samtools" "[ -z $(tail -1 ${stderrF} | grep -e '${samtools_msg}') ]"
 	assertTrue "expected output to standard output" "[ -e ${stdoutF} ]"
 
 	echo "stderr output:"
@@ -239,6 +239,27 @@ testGetMappedReads()
 	#echo "stdout output"
 	#cat ${stdoutF}
 }
+
+
+
+#----------------------------
+# testGetTotalReadsCount
+
+#testTotalReadsCount()
+#{
+#	TEST_SAM_FILE="data/test.sam"
+
+#    out=$(get_total_reads_count $TEST_SAM_FILE 2>${stderrF})
+#    out2=$(grep -v "^@" $TEST_SAM_FILE | wc -l)
+
+#	assertEquals "Unexpected inequality in total reads count" $out $out2
+#	
+#}
+
+
+
+
+
 
 #================
 
