@@ -104,6 +104,27 @@ testFailedDefaultCheckingConfigParamsIntervalValidity()
     cat ${stderrF}
 }
 
+#-------------------
+# testGetToolVersion
+#
+ testGetToolVersion()
+{
+	CMD_NAME="bwa"
+	CMD_NAME_2="samtools"
+	version_bwa=$(get_tool_version $CMD_NAME  2>${stderrF} ) 
+	version_samtools=$(get_tool_version $CMD_NAME_2 2>>${stderrF})
+	
+	echo $version_bwa
+	echo $version_samtools
+
+	assertTrue "Unexpected null value for $CMD_NAME"  "[ -n $version_bwa ]"
+	assertTrue "Unexpected null value for $CMD_NAME_2" "[ -n $version_samtools ]"
+	assertFalse "Unexpected output to stderr" "[ -s ${stderrF} ]"
+
+
+}
+
+
 #--------------------------------------
 # testFailedFastqcQualityFailureReport
 #
