@@ -120,22 +120,25 @@ testFailedDefaultCheckingConfigParamsIntervalValidity()
 	assertTrue "Unexpected null value for $CMD_NAME"  "[ -n $version_bwa ]"
 	assertTrue "Unexpected null value for $CMD_NAME_2" "[ -n $version_samtools ]"
 	assertFalse "Unexpected output to stderr" "[ -s ${stderrF} ]"
-
-
 }
 
 
 #-------------------
-# testGetGenomeList
+# testGetGenomesDirList
 #
- testGetGenomeList()
+ testGetGenomesDirList()
 {
-	#CMD_NAME="Ath-Col0-tair10-WG"
-    genome_indice_user=1
-	#genome_list=$(get_genome_list $CMD_NAME  2>${stderrF} )
-	
-    assertTrue "Unexpected reference of genome $genome_indice_user" "[ -n $genome_list ]"
+	genomes_list=($(get_genomes_dir_list ${TEST_GENOMES_PATH}  2>${stderrF} ))
+
+	echo "${genomes_list[@]}"	
+
+    assertTrue "Unexpected void genomes list" "[ ${#genomes_list[@]} -ge 1 ]"
 	assertFalse "Unexpected output to stderr" "[ -s ${stderrF} ]"
+
+	if [[ -s ${stderrF} ]]
+	then
+		cat ${stderrF}
+	fi
 }
 
 #--------------------------------------
@@ -313,6 +316,8 @@ oneTimeSetUp()
     TEST_SAM="data/test_mapped_MAPQ.sam"
     TEST_FASTQC_1="data/test_1_Qual_Raw_Reads_test1.fq_fastqc_summary.txt"
     TEST_FASTQC_2="data/test_2_Qual_Raw_Reads_test2.fq_fastqc_summary.txt"
+
+	TEST_GENOMES_PATH="/data/SEQUENCES/GENOME"
 }
 
 setUp()
