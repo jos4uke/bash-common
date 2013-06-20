@@ -125,6 +125,19 @@ testFailedDefaultCheckingConfigParamsIntervalValidity()
 }
 
 
+#-------------------
+# testGetGenomeList
+#
+ testGetGenomeList()
+{
+	#CMD_NAME="Ath-Col0-tair10-WG"
+    genome_indice_user=1
+	#genome_list=$(get_genome_list $CMD_NAME  2>${stderrF} )
+	
+    assertTrue "Unexpected reference of genome $genome_indice_user" "[ -n $genome_list ]"
+	assertFalse "Unexpected output to stderr" "[ -s ${stderrF} ]"
+}
+
 #--------------------------------------
 # testFailedFastqcQualityFailureReport
 #
