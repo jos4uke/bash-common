@@ -141,6 +141,24 @@ testFailedDefaultCheckingConfigParamsIntervalValidity()
 	fi
 }
 
+#----------------------------------
+# testGetGenomesDirListWithOneFasta
+#
+ testGetGenomesDirListWithOneFasta()
+{
+	genomes_list_fasta=($(get_genomes_dir_list_with_one_fasta ${TEST_GENOMES_PATH}))
+
+    assertTrue "Unexpected void genomes list" "[ ${#genomes_list[@]} -ge 1 ]"
+	assertFalse "Unexpected output to stderr" "[ -s ${stderrF} ]"
+
+	if [[ -s ${stderrF} ]]
+	then
+		cat ${stderrF}
+	fi
+}
+
+
+
 #--------------------------------------
 # testFailedFastqcQualityFailureReport
 #
@@ -318,6 +336,7 @@ oneTimeSetUp()
     TEST_FASTQC_2="data/test_2_Qual_Raw_Reads_test2.fq_fastqc_summary.txt"
 
 	TEST_GENOMES_PATH="/data/SEQUENCES/GENOME"
+	TEST_BWA_INDEXES="/data/SEQUENCES/INDEX/bwa"
 }
 
 setUp()
