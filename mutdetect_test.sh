@@ -201,6 +201,26 @@ testFailedDefaultCheckingConfigParamsIntervalValidity()
 	fi
 }
 
+#----------------------------------
+# testGetGenomesListWithSnpEffAnnot
+#
+testGetGenomesListWithSnpEffAnnot()
+{
+	genomes_list_fasta=($(get_genomes_dir_list_with_one_fasta ${TEST_GENOMES_PATH}))
+
+	echo "${genomes_list_fasta[@]}"	
+
+	genomes_w_snpeff=($(get_genomes_list_with_snpeff_annot ${TEST_SNPEFF_DATA} "${genomes_list_fasta[@]}" 2>${stderrF}))	
+
+    assertTrue "Unexpected void genomes list with snpeff annot files" "[ ${#genomes_w_snpeff[@]} -ge 1 ]"
+	assertFalse "Unexpected output to stderr" "[ -s ${stderrF} ]"
+
+	if [[ -s ${stderrF} ]]
+	then
+		cat ${stderrF}
+	fi
+}
+
 #--------------------------------------
 # testFailedFastqcQualityFailureReport
 #
@@ -380,6 +400,8 @@ oneTimeSetUp()
 	TEST_GENOMES_PATH="/data/SEQUENCES/GENOME"
 	TEST_BWA_INDEXES="/data/SEQUENCES/INDEX/bwa"
 	TEST_SAMTOOLS_INDEXES="/data/SEQUENCES/INDEX/samtools"
+	TEST_SNPEFF_VERSION="/usr/local/src/snpEff_3_0"
+	TEST_SNPEFF_DATA=$TEST_SNPEFF_VERSION/"data"
 }
 
 setUp()
