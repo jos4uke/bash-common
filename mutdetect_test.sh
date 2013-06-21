@@ -157,7 +157,27 @@ testFailedDefaultCheckingConfigParamsIntervalValidity()
 	fi
 }
 
+#-------------------------------
+# testGetGenomesListWithBwaIndex
+#
+ testGetGenomesListWithBwaIndex()
+{
+	genomes_list_fasta=($(get_genomes_dir_list_with_one_fasta ${TEST_GENOMES_PATH}))
 
+	echo "${genomes_list_fasta[@]}"	
+
+	bwa_version=$(get_tool_version "bwa")
+
+	genomes_w_bwa_idx=($(get_genomes_list_with_bwa_index ${TEST_BWA_INDEXES}/${bwa_version} "${genomes_list_fasta[@]}" 2>${stderrF}))	
+
+    assertTrue "Unexpected void genomes list with bwa index" "[ ${#genomes_w_bwa_idx[@]} -ge 1 ]"
+	assertFalse "Unexpected output to stderr" "[ -s ${stderrF} ]"
+
+	if [[ -s ${stderrF} ]]
+	then
+		cat ${stderrF}
+	fi
+}
 
 #--------------------------------------
 # testFailedFastqcQualityFailureReport
@@ -337,6 +357,7 @@ oneTimeSetUp()
 
 	TEST_GENOMES_PATH="/data/SEQUENCES/GENOME"
 	TEST_BWA_INDEXES="/data/SEQUENCES/INDEX/bwa"
+	TEST_SAMTOOLS_INDEXES="/data/SEQUENCES/INDEX/samtools"
 }
 
 setUp()
