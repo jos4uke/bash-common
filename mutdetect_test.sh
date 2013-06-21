@@ -179,6 +179,28 @@ testFailedDefaultCheckingConfigParamsIntervalValidity()
 	fi
 }
 
+#------------------------------------
+# testGetGenomesListWithSamtoolsIndex
+#
+ testGetGenomesListWithSamtoolsIndex()
+{
+	genomes_list_fasta=($(get_genomes_dir_list_with_one_fasta ${TEST_GENOMES_PATH}))
+
+	echo "${genomes_list_fasta[@]}"	
+
+	samtools_version=$(get_tool_version "samtools")
+
+	genomes_w_samtools_idx=($(get_genomes_list_with_samtools_index ${TEST_SAMTOOLS_INDEXES}/${samtools_version} "${genomes_list_fasta[@]}" 2>${stderrF}))	
+
+    assertTrue "Unexpected void genomes list with samtools index" "[ ${#genomes_w_samtools_idx[@]} -ge 1 ]"
+	assertFalse "Unexpected output to stderr" "[ -s ${stderrF} ]"
+
+	if [[ -s ${stderrF} ]]
+	then
+		cat ${stderrF}
+	fi
+}
+
 #--------------------------------------
 # testFailedFastqcQualityFailureReport
 #
