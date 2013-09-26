@@ -3,6 +3,8 @@
 # BASH COMMON FUNCTIONS LIBRARY
 #
 
+VERSION=v0.0.1
+
 #-------------------
 # in_array function
 #
