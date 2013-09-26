@@ -1,6 +1,6 @@
 #! /bin/bash
 #
-# MUTDETECT FUNCTIONS LIBRARY
+# BASH COMMON FUNCTIONS LIBRARY
 #
 
 #-------------------
