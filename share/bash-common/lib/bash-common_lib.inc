@@ -659,6 +659,89 @@ check_params_interval_validity()
     fi
 }
 
+#--------------------------------------------------------------
+# Function: get_config_sections config_file
+# Purpose : Print the list of config sections from config file
+get_config_sections()
+{
+	typeset config_file=$1
+
+	egrep "^\[" ${config_file} | awk -F '[][]' '
+		NF==3 && $0 ~ /^\[.*\]/ { print $2 }
+		' 2>&1
+	rtrn=$?
+	if [[ $rtrn -ne 0 ]]; then
+		echo -e "$(date '+%Y%m%d %r') [$0] Failed Error parsing configuration sections in ${config_file}." >&2
+		return $rtrn
+	else
+		return $rtrn
+	fi
+}
+
+#-------------------------------------------------------------------------
+# Function : format_config_params config_file config_section [config_prefix]
+# Purpose  : Format variables (prefixed by config_prefix and corresponding config_section) from config_section in config file
+format_config_params()
+{
+	typeset config_file=$1
+	typeset config_section=$2
+	typeset config_prefix=$3
+	typeset config_params
+
+	[[ -n $config_prefix ]] && config_prefix=$config_prefix"_"
+	config_params=$(
+	awk -F= -v Config="${config_section}" -v Prefix="${config_prefix}" '
+		BEGIN {
+			Config = toupper(Config);
+			Prefix = toupper(Prefix);
+			patternConfig = "\\[" Config "]";
+		}
+		toupper($0)  ~ patternConfig,(/^\[/ && toupper($0) !~ patternConfig)  {
+			if (/^#/ || /^\[/ || NF <2) next;
+			sub(/^[[:space:]]*/, "");
+			sub(/[[:space:]]*=[[:space:]]/, "=");
+			print Prefix Config"_"$0;
+		} ' ${config_file} 2>&1)
+	rtrn=$?
+
+	if [[ $rtrn -ne 0 ]]; then
+		echo -e "$(date '+%Y%m%d %r') [set_config_params] Failed Error parsing configuration parameters in ${config_file}." >&2
+		return $rtrn
+	else
+		echo -e "${config_params[@]}"
+	fi
+}
+
+###
+### COMMAND LINE UTILS
+###
+
+#-------------------------------------------------------------------------
+# Function : buildCommandLineOptions command_name [prefix]
+# Purpose  : build the command line options for the given command_name
+buildCommandLineOptions()
+{
+    typeset cmd_name=$1
+	typeset config_prefix=$2
+
+    # if command_name contains spaces, replace blanks by underscores
+	# example: samtools view => samtools_view
+	[[ $cmd_name =~ " " ]] && cmd_name=${cmd_name// /_}
+    # if config_prefix not null, suffixed it with underscore    
+    [[ -n $config_prefix ]] && config_prefix=$config_prefix"_"
+    set | awk -F= -v cfg=${cmd_name} -v prefix=${config_prefix} '
+        BEGIN {cfg = toupper(cfg); prefix = toupper(prefix); patternConfig="^" prefix cfg;} 
+        toupper($0) ~ patternConfig  { 
+            val=$2; split($1, a, "_"); opt=a[length(a)]; 
+            if (length(opt) == 1) {
+                if (toupper(val) ~ "TRUE") val=""; 
+                opt_val="-"opt" "val;
+            } 
+            else if (toupper(val) ~ "TRUE") opt_val="--"opt; 
+            else opt_val="--"opt"="val; 
+            print opt_val}'
+}
+
 ###
 ### QUALITY REPORT PARSING
 ###
