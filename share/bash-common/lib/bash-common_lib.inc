@@ -1038,6 +1038,34 @@ get_genomes_list_with_snpeff_annot()
 ### SAM SEQUENCES ALIGNMENTS FILTERING
 ###
 
+#----------------------------------
+# get_no_gapped_aln function
+#
+get_no_gapped_aln()
+{
+	sam_input=$1
+	grep XO:i:[0][[:space:]] $sam_input
+}
+
+#----------------------------------
+# get_no_mismatched_aln function
+#
+get_no_mismatched_aln()
+{
+	sam_input=$1
+	grep XM:i:[0][[:space:]] $sam_input
+}
+
+#--------------------------------
+# filter_on_mapq function
+#
+filter_on_mapq()
+{
+	sam_input=$1
+	mapq_min=$2
+	awk -v mapq_th="${mapq_min}" '{if($5==0 || $5>=mapq_th) print}' $sam_input
+}
+
 #-----------------------------
 # get_unique_matches function
 #
