@@ -1049,6 +1049,17 @@ get_mapped_reads()
 
 }
 
+#------------------------------------
+# get_mapped_reads_w_header function
+#
+get_mapped_reads_w_header()
+{
+	sam_input=$1
+
+	samtools view -h -S -F 4 $sam_input
+
+}
+
 #---------------------------
 # get_total_reads_count
 #
