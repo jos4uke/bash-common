@@ -793,6 +793,51 @@ waitalluntiltimeout() {
 # Purpose  : print a debug message to the standard error
 debug() { echo "$(date '+%Y_%m_%d %T') DEBUG: $*" >&2; }
 
+###
+### EXCEPTION MANAGEMENT
+###
+
+#-------------------------------------------------------------------------
+# Function : exit_on_error err msg status log 
+# Purpose  : check if current process has to exit when checking for exit status, if different of 0 exits with error msg send to log with err file reference for details
+exit_on_error()
+{
+	err=$1
+	msg=$2
+	status=$3
+	log=$4
+	tag=$5
+	recipient=$6
+	if [[ "$status" -ne 0 ]]; then
+		echo -e "$(date '+%Y_%m_%d %T') $msg" | tee -a $err 2>&1 | [[ -n $log ]] && tee -a $log 2>&1
+		echo -e "$(date '+%Y_%m_%d %T') [Pipeline error] Exits the pipeline, with error code $status." | tee -a $err 2>&1 | [[ -n $log ]] && tee -a $log 2>&1
+		echo -e "$(date '+%Y_%m_%d %T') [Pipeline error] Tail error output:" | [[ -n $log ]] && tee -a $log 2>&1
+		echo -e "... $(tail -n 10 $err)" 2>&1 | [[ -n $log ]] && tee -a $log 2>&1
+    	echo -e "$(date '+%Y_%m_%d %T') [Pipeline error] More details can be found in $err." | [[ -n $log ]] && tee -a $log 2>&1
+		# send an email
+		proc_error_msg="$tag process error: $msg\nExit status: $status\nMore details can be found in $(readlink -f $err)\nLast error output:\n... $(tail -n 10 $err)"
+		[[ -n $recipient ]] && sendEmailBasic $recipient "[$(basename ${0%.*})] $tag process error" "$proc_error_msg" $err
+		exit $status
+	fi
+}
+
+#-------------------------------------------------------------------------
+# Function : sendEmailBasic recipient subject message [files_to_attach]
+# Purpose  : send an email
+sendEmailBasic()
+{
+	recipient=$1
+	subject=$2
+	msg=$3
+	local files=()
+	shift 3
+	[[ -n "$@" ]] && files=("$@")
+	export EMAIL="Joseph.Tran@versailles.inra.fr"
+	export REPLYTO="Joseph.Tran@versailles.inra.fr"
+	export realname="Pipeline Administrator"
+
+	echo -e "$msg" | mutt -e "set realname=\"$realname\"" -s "$subject" $([[ $(echo "$subject" | gawk '{print toupper($0)}') =~ "ERROR" ]] && echo -ne "-c $EMAIL ") $([[ -n $files ]] && echo -ne "-a ${files[@]}") -- $recipient
+}
 
 ###
 ### QUALITY REPORT PARSING
