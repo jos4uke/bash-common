@@ -1038,6 +1038,17 @@ get_genomes_list_with_snpeff_annot()
 ### SAM SEQUENCES ALIGNMENTS FILTERING
 ###
 
+#--------------------------------------
+# dispatch_two_genomes_header function
+#
+dispatch_two_genomes_header()
+{
+	hdr_file=$1
+	parent1=$1
+	parent2=$2
+	awk -vp1="$parent1" -vp2="$parent2" 'if ($0~p1) {print $0} else if ($0!~p2) {print $0}' $hdr_file
+}
+
 #----------------------------------
 # get_no_gapped_aln function
 #
@@ -1072,7 +1083,7 @@ filter_on_mapq()
 get_unique_matches()
 {
 	sam_input=$1
-	samtools view -S $sam_input | grep -e 'X0:i:1[[:space:]]' -e 'XT:A:U' | awk '($5 > 0)'
+	samtools view -S $sam_input | grep -e 'X0:i:1[[:space:]]'
 }
 
 #---------------------------
