@@ -1083,7 +1083,7 @@ filter_on_mapq()
 get_unique_matches()
 {
 	sam_input=$1
-	samtools view -S $sam_input | grep -e 'X0:i:1[[:space:]]'
+	grep -e 'X0:i:1[[:space:]]' $sam_input
 }
 
 #---------------------------
