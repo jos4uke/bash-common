@@ -39,7 +39,7 @@
 
 # Date: 2012-09-21
 
-VERSION=v0.0.1
+local VERSION=v0.0.1
 
 ###
 ### DATA SEARCH UTILS
@@ -1074,7 +1074,7 @@ filter_on_mapq()
 {
 	sam_input=$1
 	mapq_min=$2
-	awk -v mapq_th="${mapq_min}" '{if($5==0 || $5>=mapq_th) print}' $sam_input
+	awk -v mapq_th="${mapq_min}" '{if($5>=mapq_th) print}' $sam_input
 }
 
 #-----------------------------
