@@ -1046,7 +1046,7 @@ dispatch_two_genomes_header()
 	hdr_file=$1
 	parent1=$1
 	parent2=$2
-	awk -vp1="$parent1" -vp2="$parent2" 'if ($0~p1) {print $0} else if ($0!~p2) {print $0}' $hdr_file
+	awk -vp1="$parent1" -vp2="$parent2" '{if ($0~p1) {print} else if ($0!~p2) {print}}' $hdr_file
 }
 
 #----------------------------------
