@@ -1044,8 +1044,8 @@ get_genomes_list_with_snpeff_annot()
 dispatch_two_genomes_header()
 {
 	hdr_file=$1
-	parent1=$1
-	parent2=$2
+	parent1=$2
+	parent2=$3
 	awk -vp1="$parent1" -vp2="$parent2" '{if ($0~p1) {print} else if ($0!~p2) {print}}' $hdr_file
 }
 
@@ -1195,34 +1195,4 @@ remove_reads_with_indels_size_greater_than_y_bases()
     #done < $INFILE
 }
 
-###
-### REPORTING
-###
 
-#-----------------------------------------------------------
-# write formatted file for trimming details rnw subsection
-#
-rnw_trimming_details_subsection()
-{
-    INFILE=$1
-    OUTDIR=$2
-    echo "Input read pairs" $(grep "Input Read" $INFILE |awk '{print "\t"$4*2}') >> $OUTDIR/trimming_details.txt
-	echo "Both surviving" $(grep "Input Read" $INFILE | awk '{print "\t"$7}') >> $OUTDIR/trimming_details.txt
-	echo "Forward only surviving" $(grep "Input Read" $INFILE | awk '{print "\t"$12}') >> $OUTDIR/trimming_details.txt
-	echo "Reverse only surviving"  $(grep "Input Read" $INFILE | awk '{print "\t"$17}') >> $OUTDIR/trimming_details.txt
-	echo "Read pairs dropped" $(grep "Input Read" $INFILE | awk '{print "\t"$20}') >> $OUTDIR/trimming_details.txt
-}
-
-#-----------------------------------------------------------
-# write formatted file for alignment filtering rnw subsection
-#
-rnw_alignment_filtering_subsection()
-{    
-    INFILE=$1
-    OUTDIR=$2
-    echo "Number of reads after quality filtering" $(grep "Input Read" $INFILE | awk '{print "\t"$7*2}') >> $OUTDIR/alignment_filtering.txt
-	echo "Number of mapped reads" $(grep "Filter aligned reads" $INFILE  | awk '{print "\t"$NF}') >> $OUTDIR/alignment_filtering.txt
-	echo "Number of reads belonging to MAPQ threshold" $(grep "Filter MAPQ" $INFILE | awk '{print "\t"$NF}') >> $OUTDIR/alignment_filtering.txt
-	echo "Number of reads with no more than X independent events" $(grep -E "Filter XOXM.*mapped" $INFILE | awk '{print "\t"$NF}') >> $OUTDIR/alignment_filtering.txt
-	echo "Number of reads belonging to microindel size interval" $(grep -E "Filter indels.*mapped" $INFILE | awk '{print "\t"$NF}') >> $OUTDIR/alignment_filtering.txt
-}
