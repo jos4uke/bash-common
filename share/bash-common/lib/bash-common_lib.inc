@@ -1,9 +1,49 @@
 #! /bin/bash
+
 #
 # BASH COMMON FUNCTIONS LIBRARY
 #
 
-VERSION=v0.0.1
+# Copyright 2012 Joseph Tran <Joseph.Tran@versailles.inra.fr>
+
+# This software is a collection of utils functions and scripts in bash whose purpose is to:
+# - perform configuration parsing and validation, filtering operations on sequence alignments, text manipulations, 
+#   quality report parsing, filtering operations on genomes list with available sequences and indexes, etc.
+# - the following code is a tests suite intended to test the library functions of this software.
+
+# This software is governed by the CeCILL license, Version 2.0 (the "License"), under French law and
+# abiding by the rules of distribution of free software.  You can  use, 
+# modify and/ or redistribute the software under the terms of the CeCILL
+# license, Version 2.0 (the "License"), as circulated by CEA, CNRS and INRIA at the following URL
+# "http://www.cecill.info/licences/Licence_CeCILL_V2-en.txt". 
+
+# As a counterpart to the access to the source code and  rights to copy,
+# modify and redistribute granted by the license, users are provided only
+# with a limited warranty  and the software's author,  the holder of the
+# economic rights,  and the successive licensors  have only  limited
+# liability. 
+
+# In this respect, the user's attention is drawn to the risks associated
+# with loading,  using,  modifying and/or developing or reproducing the
+# software by the user in light of its specific status of free software,
+# that may mean  that it is complicated to manipulate,  and  that  also
+# therefore means  that it is reserved for developers  and  experienced
+# professionals having in-depth computer knowledge. Users are therefore
+# encouraged to load and test the software's suitability as regards their
+# requirements in conditions enabling the security of their systems and/or 
+# data to be ensured and,  more generally, to use and operate it in the 
+# same conditions as regards security. 
+
+# The fact that you are presently reading this means that you have had
+# knowledge of the CeCILL license, Version 2.0 (the "License"), and that you accept its terms.
+
+# Date: 2012-09-21
+
+local VERSION=v0.0.1
+
+###
+### DATA SEARCH UTILS
+###
 
 #-------------------
 # in_array function
@@ -22,6 +62,11 @@ in_array() {
     done
     return 1
 }
+
+
+###
+### TEXT MANIPULATIONS
+###
 
 #------------------
 # toupper function
@@ -48,6 +93,10 @@ tolower()
     unset out char 
     return $retval
 }
+
+###
+### CONFIGURATION FILE PARSING AND VALIDATION
+###
 
 #------------------------------------------
 # get_mutdetect_default_parameters function
@@ -610,6 +659,190 @@ check_params_interval_validity()
     fi
 }
 
+#--------------------------------------------------------------
+# Function: get_config_sections config_file
+# Purpose : Print the list of config sections from config file
+get_config_sections()
+{
+	typeset config_file=$1
+
+	egrep "^\[" ${config_file} | awk -F '[][]' '
+		NF==3 && $0 ~ /^\[.*\]/ { print $2 }
+		' 2>&1
+	rtrn=$?
+	if [[ $rtrn -ne 0 ]]; then
+		echo -e "$(date '+%Y%m%d %r') [$0] Failed Error parsing configuration sections in ${config_file}." >&2
+		return $rtrn
+	else
+		return $rtrn
+	fi
+}
+
+#-------------------------------------------------------------------------
+# Function : format_config_params config_file config_section [config_prefix]
+# Purpose  : Format variables (prefixed by config_prefix and corresponding config_section) from config_section in config file
+format_config_params()
+{
+	typeset config_file=$1
+	typeset config_section=$2
+	typeset config_prefix=$3
+	typeset config_params
+
+	[[ -n $config_prefix ]] && config_prefix=$config_prefix"_"
+	config_params=$(
+	awk -F= -v Config="${config_section}" -v Prefix="${config_prefix}" '
+		BEGIN {
+			Config = toupper(Config);
+			Prefix = toupper(Prefix);
+			patternConfig = "\\[" Config "]";
+		}
+		toupper($0)  ~ patternConfig,(/^\[/ && toupper($0) !~ patternConfig)  {
+			if (/^#/ || /^\[/ || NF <2) next;
+			sub(/^[[:space:]]*/, "");
+			sub(/[[:space:]]*=[[:space:]]/, "=");
+			print Prefix Config"_"$0;
+		} ' ${config_file} 2>&1)
+	rtrn=$?
+
+	if [[ $rtrn -ne 0 ]]; then
+		echo -e "$(date '+%Y%m%d %r') [set_config_params] Failed Error parsing configuration parameters in ${config_file}." >&2
+		return $rtrn
+	else
+		echo -e "${config_params[@]}"
+	fi
+}
+
+###
+### COMMAND LINE UTILS
+###
+
+#-------------------------------------------------------------------------
+# Function : buildCommandLineOptions command_name [prefix]
+# Purpose  : build the command line options for the given command_name
+buildCommandLineOptions()
+{
+    typeset cmd_name=$1
+	typeset config_prefix=$2
+
+    # if command_name contains spaces, replace blanks by underscores
+	# example: samtools view => samtools_view
+	[[ $cmd_name =~ " " ]] && cmd_name=${cmd_name// /_}
+    # if config_prefix not null, suffixed it with underscore    
+    [[ -n $config_prefix ]] && config_prefix=$config_prefix"_"
+    set | awk -F= -v cfg=${cmd_name} -v prefix=${config_prefix} '
+        BEGIN {cfg = toupper(cfg); prefix = toupper(prefix); patternConfig="^" prefix cfg;} 
+        toupper($0) ~ patternConfig  { 
+            val=$2; split($1, a, "_"); opt=a[length(a)]; 
+            if (length(opt) == 1) {
+                if (toupper(val) ~ "TRUE") val=""; 
+                opt_val="-"opt" "val;
+            } 
+            else if (toupper(val) ~ "TRUE") opt_val="--"opt; 
+            else opt_val="--"opt"="val; 
+            print opt_val}'
+}
+
+###
+### PROCESS MANAGEMENT
+###
+
+#-------------------------------------------------------------------------
+# Function : waitalluntiltimeout $pids_array
+# Purpose  : wait for all child processes to finish and log their exit status until timeout, then kill all running out time child processes
+waitalluntiltimeout() {
+  ## Wait for children to exit and indicate whether all exited with 0 status.
+  local errors=0
+  ((t = WAITALL_TIMEOUT))
+  while ((t > 0)); do
+    debug "Processes remaining: $*"
+    for pid in "$@"; do
+      shift
+      if kill -0 "$pid" 2>/dev/null; then
+        debug "$pid is still alive."
+        set -- "$@" "$pid"
+      elif wait "$pid"; then
+		status=$?
+        debug "$pid exited with zero exit status ($status)."
+      else
+		status=$?
+        debug "$pid exited with non-zero exit status ($status)."
+        ((++errors))
+      fi
+    done
+    (("$#" > 0)) || break
+    # TODO: how to interrupt this sleep when a child terminates?
+    sleep ${WAITALL_INTERVAL:-1}
+	((t -= WAITALL_INTERVAL))
+  done
+  if [[ -n "$@" ]]; then
+  for pid in "$@"; do
+    debug "$pid is running out time limit: $WAITALL_TIMEOUT."
+    debug "killing process $pid ..."
+    kill -s SIGTERM $pid && kill -0 $pid
+	sleep ${WAITALL_DELAY:-1}
+    kill -s SIGKILL $pid
+    debug "process $pid killed"
+  done
+  fi
+  unset pid status
+  ((errors == 0))
+}
+
+#-------------------------------------------------------------------------
+# Function : degug $message_string
+# Purpose  : print a debug message to the standard error
+debug() { echo "$(date '+%Y_%m_%d %T') DEBUG: $*" >&2; }
+
+###
+### EXCEPTION MANAGEMENT
+###
+
+#-------------------------------------------------------------------------
+# Function : exit_on_error err msg status log 
+# Purpose  : check if current process has to exit when checking for exit status, if different of 0 exits with error msg send to log with err file reference for details
+exit_on_error()
+{
+	err=$1
+	msg=$2
+	status=$3
+	log=$4
+	tag=$5
+	recipient=$6
+	if [[ "$status" -ne 0 ]]; then
+		echo -e "$(date '+%Y_%m_%d %T') $msg" | tee -a $err 2>&1 | [[ -n $log ]] && tee -a $log 2>&1
+		echo -e "$(date '+%Y_%m_%d %T') [Pipeline error] Exits the pipeline, with error code $status." | tee -a $err 2>&1 | [[ -n $log ]] && tee -a $log 2>&1
+		echo -e "$(date '+%Y_%m_%d %T') [Pipeline error] Tail error output:" | [[ -n $log ]] && tee -a $log 2>&1
+		echo -e "... $(tail -n 10 $err)" 2>&1 | [[ -n $log ]] && tee -a $log 2>&1
+    	echo -e "$(date '+%Y_%m_%d %T') [Pipeline error] More details can be found in $err." | [[ -n $log ]] && tee -a $log 2>&1
+		# send an email
+		proc_error_msg="$tag process error: $msg\nExit status: $status\nMore details can be found in $(readlink -f $err)\nLast error output:\n... $(tail -n 10 $err)"
+		[[ -n $recipient ]] && sendEmailBasic $recipient "[$(basename ${0%.*})] $tag process error" "$proc_error_msg" $err
+		exit $status
+	fi
+}
+
+#-------------------------------------------------------------------------
+# Function : sendEmailBasic recipient subject message [files_to_attach]
+# Purpose  : send an email
+sendEmailBasic()
+{
+	recipient=$1
+	subject=$2
+	msg=$3
+	local files=()
+	shift 3
+	[[ -n "$@" ]] && files=("$@")
+	export EMAIL="Joseph.Tran@versailles.inra.fr"
+	export REPLYTO="Joseph.Tran@versailles.inra.fr"
+	export realname="Pipeline Administrator"
+
+	echo -e "$msg" | mutt -e "set realname=\"$realname\"" -s "$subject" $([[ $(echo "$subject" | gawk '{print toupper($0)}') =~ "ERROR" ]] && echo -ne "-c $EMAIL ") $([[ -n $files ]] && echo -ne "-a ${files[@]}") -- $recipient
+}
+
+###
+### QUALITY REPORT PARSING
+###
+
 #----------------------------------------------
 # check_fastqc_quality_failure_report function
 #
@@ -628,6 +861,10 @@ check_fastqc_quality_failure_report()
 	return $rtrn
     fi
 }
+
+###
+### GENOMES LIST FILTERING
+###
 
 #-------------------
 # get_tool_version
@@ -797,6 +1034,58 @@ get_genomes_list_with_snpeff_annot()
 	echo "${genomes_snpeff[@]}"
 }
 
+###
+### SAM SEQUENCES ALIGNMENTS FILTERING
+###
+
+#--------------------------------------
+# dispatch_two_genomes_header function
+#
+dispatch_two_genomes_header()
+{
+	hdr_file=$1
+	parent1=$2
+	parent2=$3
+	awk -vp1="$parent1" -vp2="$parent2" '{if ($0~p1) {print} else if ($0!~p2) {print}}' $hdr_file
+}
+
+#----------------------------------
+# get_no_gapped_aln function
+#
+get_no_gapped_aln()
+{
+	sam_input=$1
+	grep XO:i:[0][[:space:]] $sam_input
+}
+
+#----------------------------------
+# get_no_mismatched_aln function
+#
+get_no_mismatched_aln()
+{
+	sam_input=$1
+	grep XM:i:[0][[:space:]] $sam_input
+}
+
+#--------------------------------
+# filter_on_mapq function
+#
+filter_on_mapq()
+{
+	sam_input=$1
+	mapq_min=$2
+	awk -v mapq_th="${mapq_min}" '{if($5>=mapq_th) print}' $sam_input
+}
+
+#-----------------------------
+# get_unique_matches function
+#
+get_unique_matches()
+{
+	sam_input=$1
+	grep -e 'X0:i:1[[:space:]]' $sam_input
+}
+
 #---------------------------
 # get_mapped_reads function
 #
@@ -805,6 +1094,17 @@ get_mapped_reads()
 	sam_input=$1
 
 	samtools view -S -F 4 $sam_input
+
+}
+
+#------------------------------------
+# get_mapped_reads_w_header function
+#
+get_mapped_reads_w_header()
+{
+	sam_input=$1
+
+	samtools view -h -S -F 4 $sam_input
 
 }
 
@@ -896,30 +1196,3 @@ remove_reads_with_indels_size_greater_than_y_bases()
 }
 
 
-#-----------------------------------------------------------
-# write formatted file for trimming details rnw subsection
-#
-rnw_trimming_details_subsection()
-{
-    INFILE=$1
-    OUTDIR=$2
-    echo "Input read pairs" $(grep "Input Read" $INFILE |awk '{print "\t"$4*2}') >> $OUTDIR/trimming_details.txt
-	echo "Both surviving" $(grep "Input Read" $INFILE | awk '{print "\t"$7}') >> $OUTDIR/trimming_details.txt
-	echo "Forward only surviving" $(grep "Input Read" $INFILE | awk '{print "\t"$12}') >> $OUTDIR/trimming_details.txt
-	echo "Reverse only surviving"  $(grep "Input Read" $INFILE | awk '{print "\t"$17}') >> $OUTDIR/trimming_details.txt
-	echo "Read pairs dropped" $(grep "Input Read" $INFILE | awk '{print "\t"$20}') >> $OUTDIR/trimming_details.txt
-}
-
-#-----------------------------------------------------------
-# write formatted file for alignment filtering rnw subsection
-#
-rnw_alignment_filtering_subsection()
-{    
-    INFILE=$1
-    OUTDIR=$2
-    echo "Number of reads after quality filtering" $(grep "Input Read" $INFILE | awk '{print "\t"$7*2}') >> $OUTDIR/alignment_filtering.txt
-	echo "Number of mapped reads" $(grep "Filter aligned reads" $INFILE  | awk '{print "\t"$NF}') >> $OUTDIR/alignment_filtering.txt
-	echo "Number of reads belonging to MAPQ threshold" $(grep "Filter MAPQ" $INFILE | awk '{print "\t"$NF}') >> $OUTDIR/alignment_filtering.txt
-	echo "Number of reads with no more than X independent events" $(grep -E "Filter XOXM.*mapped" $INFILE | awk '{print "\t"$NF}') >> $OUTDIR/alignment_filtering.txt
-	echo "Number of reads belonging to microindel size interval" $(grep -E "Filter indels.*mapped" $INFILE | awk '{print "\t"$NF}') >> $OUTDIR/alignment_filtering.txt
-}
