@@ -39,7 +39,7 @@
 
 # Date: 2012-09-21
 
-local VERSION=v0.0.1
+local VERSION=v0.0.2
 
 ###
 ### DATA SEARCH UTILS
