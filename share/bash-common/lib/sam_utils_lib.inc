@@ -50,18 +50,26 @@
 #
 parseTagIntValue()
 {
-	local tag=$1
 	if [[ ${#tag}==2 ]]; then 
-		gawk -v tag=$tag 'BEGIN {tagpat = tag ":i:([0-9]+)";} {
+		gawk -v tag=$1 '#BEGIN {tagpat = tag ":i:([0-9]+)";} 
 			# treat tags as one field
-			if (NF>11) {
+			function parseTagValue(pat) {
+				tags=""
+				if (NF>11) {
 				for(i=12;i<=NF;i++){tags=tags" "$i}
-				match(tags, tagpat, a)
+				#print tags >"/dev/stderr"
+				delete a
+				match(tags, pat, a) 
 				if (a[1]~"[0-9]+") { print a[1] } else {print "NA"; print tags >"/dev/stderr"}
+				
 			} else
 			{
 				print "Missing tags for alignment:" $0 >"/dev/stderr"
 			}
+		}
+		BEGIN {tagpat = tag ":i:([0-9]+)";}
+		{
+			parseTagValue(tagpat)
 		}'
 	else
 		echo -e "tag $tag is not a 2-character value." >&2
