@@ -68,4 +68,31 @@ parseTagIntValue()
 	fi
 }
 
+#-------------------
+# countIndels
+countIndels()
+{
+	gawk '
+		function findAllIndels(str)
+		{
+			count=0;
+			totsize=0;
+			while(match(str, /([0-9]+)[ID]/, a))
+			{  
+				sub("[ID]", "", a[0]);
+				count++;
+				totsize+=a[0]
+				str = substr(str, RSTART+RLENGTH)
+			}
+			print $1"\t"count"\t"totsize 
+		}
 
+		BEGIN {
+			print "read_id\tnumIndels\tcumInDelsSize"
+		}
+
+		{
+			findAllIndels($6)	
+		}
+	'
+}
