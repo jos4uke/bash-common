@@ -104,3 +104,113 @@ countIndels()
 		}
 	'
 }
+
+#--------
+# calcIE
+calcIE()
+{
+	gawk -v snp=$1 '
+	function parseTagValue(pat) 
+	{
+		tags=""
+		if (NF>11) {
+			for(i=12;i<=NF;i++){tags=tags" "$i}
+			#print tags >"/dev/stderr"
+			delete a
+			match(tags, pat, a) 
+			if (a[1]~"[0-9]+") { return a[1] } else { return "NA"; print tags >"/dev/stderr"}
+			
+		} else
+		{
+			print "Missing tags for alignment:" $0 >"/dev/stderr"
+		}    
+	}	
+
+	function countAllIndels(str,c)
+	{
+		count=0;
+		totsize=0;
+		while(match(str, /([0-9]+)[ID]/, a))
+		{  
+			sub("[ID]", "", a[0]);
+			count++;
+			totsize+=a[0]
+			str = substr(str, RSTART+RLENGTH)
+		}
+		c[1]=count
+		c[2]=totsize
+	}
+
+	BEGIN {
+		if (snp=="snp") {
+			# IE=XW+numInDels and NM=XW+XV+cumInDelsSize
+			print "read_id\tNM\tXW\tXV\tnumInDels\tcumInDelsSize\tIE"
+		} else
+		{
+			# IE=NM-cumInDelsSize+numInDels
+			print "read_id\tNM\tnumInDels\tcumInDelsSize\tIE"
+		}
+	}
+
+	{
+		# get NM
+		nmpat="NM:i:([0-9]+)"
+		NM=parseTagValue(nmpat)
+
+		delete idc
+		# no NM value
+		if (NM=="NA") {
+			if (snp=="snp") 
+			{
+				print $1"\tNA\tNA\tNA\tNA\tNA\tNA"
+			} else
+			{
+				print $1"\tNA\tNA\tNA\tNA"
+			}
+		} else
+		{
+			# without SNP
+			if (length(snp) == 0) 
+			{
+				countAllIndels($6,idc)
+				IE=NM - idc[2] + idc[1]
+				print $1 "\t" NM "\t" idc[1] "\t" idc[2] "\t" IE
+			# with SNP
+			} else
+			{
+				# get XW and XV
+				xwpat="XW:i:([0-9]+)"
+				XW=parseTagValue(xwpat)
+				xvpat="XV:i:([0-9]+)"
+				XV=parseTagValue(xvpat)
+				countAllIndels($6,idc)
+				IE=XW + idc[1]
+				print $1 "\t" NM "\t" XW "\t" XV "\t" idc[1] "\t" idc[2] "\t" IE
+			}
+		}
+	}'
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
