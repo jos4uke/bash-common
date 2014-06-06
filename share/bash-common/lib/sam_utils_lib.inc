@@ -172,6 +172,11 @@ calcIE()
 			# without SNP
 			if (length(snp) == 0) 
 			{
+				xvpat="XV:i:([0-9]+)"
+				if (match($0,xvpat)) {
+					print "XV tag is present in the alignment. Consider to use 'snp' switch." >"/dev/stderr"
+					exit 1
+				}
 				countAllIndels($6,idc)
 				IE=NM - idc[2] + idc[1]
 				print $1 "\t" NM "\t" idc[1] "\t" idc[2] "\t" IE
