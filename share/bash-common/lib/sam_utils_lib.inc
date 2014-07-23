@@ -32,7 +32,7 @@
 # encouraged to load and test the software's suitability as regards their
 # requirements in conditions enabling the security of their systems and/or 
 # data to be ensured and,  more generally, to use and operate it in the 
-# same conditions as regards security. 
+# same conditions as eegards security. 
 
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL license, Version 2.0 (the "License"), and that you accept its terms.
@@ -169,6 +169,8 @@ calcIE()
 			}
 		} else
 		{
+			# consider only unique alignment per read
+			if ($0~/NH:i:1[[:space:]]/) {
 			# without SNP
 			if (length(snp) == 0) 
 			{
@@ -192,30 +194,120 @@ calcIE()
 				IE=XW + idc[1]
 				print $1 "\t" NM "\t" XW "\t" XV "\t" idc[1] "\t" idc[2] "\t" IE
 			}
+			}
 		}
 	}'
 }
 
+#---------------
+# keepAlnForTag
+keepAlnForTag()
+{
+	gawk -v tag=$1 -v tmax=$2 -v snp=$3 '
+	function parseTagValue(pat) 
+	{
+		tags=""
+		if (NF>11) {
+			for(i=12;i<=NF;i++){tags=tags" "$i}
+			#print tags >"/dev/stderr"
+			delete a
+			match(tags, pat, a) 
+			if (a[1]~"[0-9]+") { return a[1] } else { return "NA"; print tags >"/dev/stderr"}
+			
+		} else
+		{
+			print "Missing tags for alignment:" $0 >"/dev/stderr"
+		}    
+	}	
 
+	function countAllIndels(str,c)
+	{
+		count=0;
+		totsize=0;
+		while(match(str, /([0-9]+)[ID]/, a))
+		{  
+			sub("[ID]", "", a[0]);
+			count++;
+			totsize+=a[0]
+			str = substr(str, RSTART+RLENGTH)
+		}
+		c[1]=count
+		c[2]=totsize
+	}
 
+	BEGIN {
+		# test tag
+		if (tag!~/[I[EM]/) {print "Tag value should be IE or IM." >"/dev/stderr"; exit 1}
+		# test tmax
+		if (tmax!~/[0-9]+/) {print tag "max value is not a digit." >"/dev/stderr"; exit 1}
 
+		# count alignments
+		## all
+		all=0
+		## nh1
+		nh1=0
+		## le_tmax
+		le_tmax=0
+		## gt_tmax
+		gt_tmax=0
+	}
 
+	{
+		all++
+		# get NM
+		nmpat="NM:i:([0-9]+)"
+		NM=parseTagValue(nmpat)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+		delete idc
+		# no NM value
+		if (NM!="NA") {
+			# consider only one best alignment per read
+			if ($0~/NH:i:1[[:space:]]/) {
+			nh1++
+			# without SNP
+			if (length(snp) == 0) 
+			{
+				xvpat="XV:i:([0-9]+)"
+				if (match($0,xvpat)) {
+					print "XV tag is present in the alignment. Consider to use 'snp' switch." >"/dev/stderr"
+					exit 1
+				}
+				countAllIndels($6,idc)
+				IE=NM - idc[2] + idc[1]
+				IM=NM - idc[2]
+				if (tag=="IE") {
+					if (IE<=tmax && IE>=0) {le_tmax++; print $0} else {gt_tmax++}
+				}
+				if (tag=="IM") {
+					if (IM<=tmax && IM>=0) {le_tmax++; print $0} else {gt_tmax++}
+				}
+			# with SNP
+			} else
+			{
+				# get XW and XV
+				xwpat="XW:i:([0-9]+)"
+				XW=parseTagValue(xwpat)
+				xvpat="XV:i:([0-9]+)"
+				XV=parseTagValue(xvpat)
+				countAllIndels($6,idc)
+				IE=XW + idc[1]
+				if (tag=="IE") {
+					if (IE<=tmax && IE>=0) {le_tmax++; print $0} else {gt_tmax++}
+				}
+				if (tag=="IM") {
+					# get XW        			
+					xwpat="XW:i:([0-9]+)"
+					XW=parseTagValue(xwpat)
+					if (XW<=tmax) {le_tmax++; print $0} else {gt_tmax++}
+				}	
+			}
+			}
+		}
+	}
+	END {
+		print "total input alignments: " all >"/dev/stderr"
+		print "total NH:i:1 alignments: " hi1 >"/dev/stderr"
+		print "total alignments lower or equal to" tag "=" tmax ": " le_tmax >"/dev/stderr"
+		print "total alignments greater than" tag "=" tmax ": " gt_tmax >"/dev/stderr"	
+	}'
+}
